@@ -18,13 +18,13 @@ const pool = new pg.Pool({
 	});
 
 app.post('/leads', async (req, res) => {
-    const { nombre, numero, correo, modelo, precio, enganche, plazo, mensualidad } = req.body;
-
+    const { nombre, numero, correo, modelo, precio, enganche, plazo, mensualidad, apellido, estado } = req.body;
+	const nombreCompleto = `${nombre} ${apellido}`;
     try {
         // Guardar en la base de datos
         const result = await pool.query(
-            'INSERT INTO lead (nombre, numero, correo, modelo, precio, enganche, plazo, mensualidad) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-            [nombre, numero, correo, modelo, precio, enganche, plazo, mensualidad]
+            'INSERT INTO lead (nombre, numero, correo, modelo, precio, enganche, plazo, mensualidad, apellido, estado) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
+            [nombre, numero, correo, modelo, precio, enganche, plazo, mensualidad, apellido, estado]
         );
 
         // Construir el JSON para enviar a Odoo
@@ -35,17 +35,18 @@ app.post('/leads', async (req, res) => {
                 service: "object",
                 method: "execute_kw",
                 args: [
-                    "ang3llpayra-cf-odoo-main-19120895",
+                    "shkappta-gyg-gygautomotriz-12693012",
                     2,  // ID del usuario (cámbialo si es otro)
-                    "9b251f9f282da8001e70dbc5c4595579ed1d215b", // API Key de Odoo
+                    "666ec74e557592a065d440ef78180109a7c90d54", // API Key de Odoo
                     "crm.lead",
                     "create",
                     [
                         {
-			    "contact_name": nombre,
+			    "contact_name": `${nombre} ${apellido}`,
                             "phone": numero,
                             "email_from": correo,
                             "expected_revenue": precio,
+				"state_id": estado,
                             "name": `Financiamiento - ${modelo} | Enganche: $${enganche} | Plazo: ${plazo} meses | Mensualidad: $${mensualidad}`,
                             "type": "opportunity"
                         }
@@ -56,7 +57,7 @@ app.post('/leads', async (req, res) => {
         };
 
         // Enviar el Lead a Odoo
-        const response = await axios.post("https://ang3llpayra-cf-odoo.odoo.com/jsonrpc", leadOdoo, {
+        const response = await axios.post("https://gygautomotriz.odoo.com/jsonrpc", leadOdoo, {
             headers: { "Content-Type": "application/json" }
         });
 
